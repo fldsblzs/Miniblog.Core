@@ -13,24 +13,21 @@ namespace Miniblog.Core.Services
 
     public class MetaWeblogService : IMetaWeblogProvider
     {
-        private readonly IBlogService blog;
-
-        private readonly IConfiguration config;
-
-        private readonly IHttpContextAccessor context;
-
-        private readonly IUserServices userServices;
+        private readonly IBlogService _blogService;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _contextAccessor;
+        private readonly IUserServices _userServices;
 
         public MetaWeblogService(
-            IBlogService blog,
-            IConfiguration config,
-            IHttpContextAccessor context,
+            IBlogService blogService,
+            IConfiguration configuration,
+            IHttpContextAccessor contextAccessor,
             IUserServices userServices)
         {
-            this.blog = blog;
-            this.config = config;
-            this.userServices = userServices;
-            this.context = context;
+            this._blogService = blogService;
+            this._configuration = configuration;
+            this._userServices = userServices;
+            this._contextAccessor = contextAccessor;
         }
 
         public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category)
@@ -72,7 +69,9 @@ namespace Miniblog.Core.Services
                 newPost.PubDate = post.dateCreated;
             }
 
-            await this.blog.SavePost(newPost).ConfigureAwait(false);
+            await this._blogService
+                .SavePost(newPost)
+                .ConfigureAwait(false);
 
             return newPost.ID;
         }
@@ -88,13 +87,19 @@ namespace Miniblog.Core.Services
         {
             this.ValidateUser(username, password);
 
-            var post = await this.blog.GetPostById(postid).ConfigureAwait(false);
+            var post = await this._blogService
+                .GetPostById(postid)
+                .ConfigureAwait(false);
+
             if (post is null)
             {
                 return false;
             }
 
-            await this.blog.DeletePost(post).ConfigureAwait(false);
+            await this._blogService
+                .DeletePost(post)
+                .ConfigureAwait(false);
+
             return true;
         }
 
@@ -109,7 +114,9 @@ namespace Miniblog.Core.Services
         {
             this.ValidateUser(username, password);
 
-            var existing = await this.blog.GetPostById(postid).ConfigureAwait(false);
+            var existing = await this._blogService
+                .GetPostById(postid)
+                .ConfigureAwait(false);
 
             if (existing is null || post is null)
             {
@@ -129,7 +136,9 @@ namespace Miniblog.Core.Services
                 existing.PubDate = post.dateCreated;
             }
 
-            await this.blog.SavePost(existing).ConfigureAwait(false);
+            await this._blogService
+                .SavePost(existing)
+                .ConfigureAwait(false);
 
             return true;
         }
@@ -141,7 +150,7 @@ namespace Miniblog.Core.Services
         {
             this.ValidateUser(username, password);
 
-            return await this.blog.GetCategories()
+            return await this._blogService.GetCategories()
                 .Select(
                     cat =>
                         new CategoryInfo
@@ -162,16 +171,21 @@ namespace Miniblog.Core.Services
         {
             this.ValidateUser(username, password);
 
-            var post = await this.blog.GetPostById(postid).ConfigureAwait(false);
+            var post = await this._blogService
+                .GetPostById(postid)
+                .ConfigureAwait(false);
 
-            return post is null ? null : this.ToMetaWebLogPost(post);
+            return post is null
+                ? null
+                : this.ToMetaWebLogPost(post);
         }
 
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
             this.ValidateUser(username, password);
 
-            return await this.blog.GetPosts(numberOfPosts)
+            return await this._blogService
+                .GetPosts(numberOfPosts)
                 .Select(this.ToMetaWebLogPost)
                 .ToArrayAsync();
         }
@@ -187,7 +201,7 @@ namespace Miniblog.Core.Services
         {
             this.ValidateUser(username, password);
 
-            var request = this.context.HttpContext.Request;
+            var request = this._contextAccessor.HttpContext.Request;
             var url = $"{request.Scheme}://{request.Host}";
 
             return Task.FromResult(
@@ -196,7 +210,7 @@ namespace Miniblog.Core.Services
                     new BlogInfo
                     {
                         blogid ="1",
-                        blogName = this.config[Constants.Config.Blog.Name] ?? nameof(MetaWeblogService),
+                        blogName = this._configuration[Constants.Config.Blog.Name] ?? nameof(MetaWeblogService),
                         url = url
                     }
                 });
@@ -212,14 +226,16 @@ namespace Miniblog.Core.Services
             }
 
             var bytes = Convert.FromBase64String(mediaObject.bits);
-            var path = await this.blog.SaveFile(bytes, mediaObject.name).ConfigureAwait(false);
+            var path = await this._blogService
+                .SaveFile(bytes, mediaObject.name)
+                .ConfigureAwait(false);
 
             return new MediaObjectInfo { url = path };
         }
 
         private Post ToMetaWebLogPost(Models.Post post)
         {
-            var request = this.context.HttpContext.Request;
+            var request = this._contextAccessor.HttpContext.Request;
             var url = $"{request.Scheme}://{request.Host}";
 
             return new Post
@@ -237,7 +253,7 @@ namespace Miniblog.Core.Services
 
         private void ValidateUser(string username, string password)
         {
-            if (this.userServices.ValidateUser(username, password) == false)
+            if (this._userServices.ValidateUser(username, password) == false)
             {
                 throw new MetaWeblogException(Properties.Resources.Unauthorized);
             }
@@ -245,7 +261,7 @@ namespace Miniblog.Core.Services
             var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
             identity.AddClaim(new Claim(ClaimTypes.Name, username));
 
-            this.context.HttpContext.User = new ClaimsPrincipal(identity);
+            this._contextAccessor.HttpContext.User = new ClaimsPrincipal(identity);
         }
     }
 }

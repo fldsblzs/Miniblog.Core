@@ -11,37 +11,35 @@ namespace Miniblog.Core.Services
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Text.Json;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Xml.Linq;
     using System.Xml.XPath;
 
-    public class FileBlogService : IBlogService
+    public class XmlBlogService : IBlogService
     {
-        private const string FILES = "files";
+        private const string Files = "files";
+        private const string Posts = "Posts";
 
-        private const string POSTS = "Posts";
-
-        private readonly List<Post> cache = new List<Post>();
-
-        private readonly IHttpContextAccessor contextAccessor;
-
-        private readonly string folder;
+        private readonly List<Post> _cache = new List<Post>();
+        private readonly IHttpContextAccessor _contextAccessor;
+        private readonly string _folder;
 
         [SuppressMessage(
                 "Usage",
                 "SecurityIntelliSenseCS:MS Security rules violation",
                 Justification = "Path not derived from user input.")]
-        public FileBlogService(IWebHostEnvironment env, IHttpContextAccessor contextAccessor)
+        public XmlBlogService(IWebHostEnvironment env, IHttpContextAccessor contextAccessor)
         {
             if (env is null)
             {
                 throw new ArgumentNullException(nameof(env));
             }
 
-            this.folder = Path.Combine(env.WebRootPath, POSTS);
-            this.contextAccessor = contextAccessor;
+            this._folder = Path.Combine(env.WebRootPath, Posts);
+            this._contextAccessor = contextAccessor;
 
             this.Initialize();
         }
@@ -60,9 +58,9 @@ namespace Miniblog.Core.Services
                 File.Delete(filePath);
             }
 
-            if (this.cache.Contains(post))
+            if (this._cache.Contains(post))
             {
-                this.cache.Remove(post);
+                this._cache.Remove(post);
             }
 
             return Task.CompletedTask;
@@ -76,7 +74,7 @@ namespace Miniblog.Core.Services
         {
             var isAdmin = this.IsAdmin();
 
-            return this.cache
+            return this._cache
                 .Where(p => p.IsPublished || isAdmin)
                 .SelectMany(post => post.Categories)
                 .Select(cat => cat.ToLowerInvariant())
@@ -87,7 +85,7 @@ namespace Miniblog.Core.Services
         public virtual Task<Post?> GetPostById(string id)
         {
             var isAdmin = this.IsAdmin();
-            var post = this.cache.FirstOrDefault(p => p.ID.Equals(id, StringComparison.OrdinalIgnoreCase));
+            var post = this._cache.FirstOrDefault(p => p.ID.Equals(id, StringComparison.OrdinalIgnoreCase));
 
             return Task.FromResult(
                 post is null || post.PubDate > DateTime.UtcNow || (!post.IsPublished && !isAdmin)
@@ -98,7 +96,7 @@ namespace Miniblog.Core.Services
         public virtual Task<Post?> GetPostBySlug(string slug)
         {
             var isAdmin = this.IsAdmin();
-            var post = this.cache.FirstOrDefault(p => p.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
+            var post = this._cache.FirstOrDefault(p => p.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
 
             return Task.FromResult(
                 post is null || post.PubDate > DateTime.UtcNow || (!post.IsPublished && !isAdmin)
@@ -111,7 +109,7 @@ namespace Miniblog.Core.Services
         {
             var isAdmin = this.IsAdmin();
 
-            var posts = this.cache
+            var posts = this._cache
                 .Where(p => p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin))
                 .ToAsyncEnumerable();
 
@@ -122,7 +120,7 @@ namespace Miniblog.Core.Services
         {
             var isAdmin = this.IsAdmin();
 
-            var posts = this.cache
+            var posts = this._cache
                 .Where(p => p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin))
                 .Skip(skip)
                 .Take(count)
@@ -135,7 +133,7 @@ namespace Miniblog.Core.Services
         {
             var isAdmin = this.IsAdmin();
 
-            var posts = from p in this.cache
+            var posts = from p in this._cache
                         where p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin)
                         where p.Categories.Contains(category, StringComparer.OrdinalIgnoreCase)
                         select p;
@@ -161,7 +159,7 @@ namespace Miniblog.Core.Services
 
             var fileNameWithSuffix = $"{name}_{suffix}{ext}";
 
-            var absolute = Path.Combine(this.folder, FILES, fileNameWithSuffix);
+            var absolute = Path.Combine(this._folder, Files, fileNameWithSuffix);
             var dir = Path.GetDirectoryName(absolute);
 
             Directory.CreateDirectory(dir);
@@ -170,7 +168,7 @@ namespace Miniblog.Core.Services
                 await writer.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
             }
 
-            return $"/{POSTS}/{FILES}/{fileNameWithSuffix}";
+            return $"/{Posts}/{Files}/{fileNameWithSuffix}";
         }
 
         public async Task SavePost(Post post)
@@ -221,16 +219,16 @@ namespace Miniblog.Core.Services
                 await doc.SaveAsync(fs, SaveOptions.None, CancellationToken.None).ConfigureAwait(false);
             }
 
-            if (!this.cache.Contains(post))
+            if (!this._cache.Contains(post))
             {
-                this.cache.Add(post);
+                this._cache.Add(post);
                 this.SortCache();
             }
         }
 
-        protected bool IsAdmin() => this.contextAccessor.HttpContext?.User?.Identity.IsAuthenticated == true;
+        protected bool IsAdmin() => this._contextAccessor.HttpContext?.User?.Identity.IsAuthenticated == true;
 
-        protected void SortCache() => this.cache.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
+        protected void SortCache() => this._cache.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
 
         private static string CleanFromInvalidChars(string input)
         {
@@ -299,7 +297,7 @@ namespace Miniblog.Core.Services
             "Usage",
             "SecurityIntelliSenseCS:MS Security rules violation",
             Justification = "Path not derived from user input.")]
-        private string GetFilePath(Post post) => Path.Combine(this.folder, $"{post.ID}.xml");
+        private string GetFilePath(Post post) => Path.Combine(this._folder, $"{post.ID}.xml");
 
         private void Initialize()
         {
@@ -313,13 +311,13 @@ namespace Miniblog.Core.Services
             Justification = "The slug should be lower case.")]
         private void LoadPosts()
         {
-            if (!Directory.Exists(this.folder))
+            if (!Directory.Exists(this._folder))
             {
-                Directory.CreateDirectory(this.folder);
+                Directory.CreateDirectory(this._folder);
             }
 
             // Can this be done in parallel to speed it up?
-            foreach (var file in Directory.EnumerateFiles(this.folder, "*.xml", SearchOption.TopDirectoryOnly))
+            foreach (var file in Directory.EnumerateFiles(this._folder, "*.xml", SearchOption.TopDirectoryOnly))
             {
                 var doc = XElement.Load(file);
 
@@ -343,7 +341,7 @@ namespace Miniblog.Core.Services
 
                 LoadCategories(post, doc);
                 LoadComments(post, doc);
-                this.cache.Add(post);
+                this._cache.Add(post);
             }
         }
     }

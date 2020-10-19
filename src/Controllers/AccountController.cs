@@ -15,9 +15,9 @@ namespace Miniblog.Core.Controllers
     [Authorize]
     public class AccountController : Controller
     {
-        private readonly IUserServices userServices;
+        private readonly IUserServices _userServices;
 
-        public AccountController(IUserServices userServices) => this.userServices = userServices;
+        public AccountController(IUserServices userServices) => this._userServices = userServices;
 
         [Route("/login")]
         [AllowAnonymous]
@@ -26,6 +26,7 @@ namespace Miniblog.Core.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             this.ViewData[Constants.ReturnUrl] = returnUrl;
+
             return this.View();
         }
 
@@ -39,12 +40,14 @@ namespace Miniblog.Core.Controllers
             if (model is null || model.UserName is null || model.Password is null)
             {
                 this.ModelState.AddModelError(string.Empty, Properties.Resources.UsernameOrPasswordIsInvalid);
+
                 return this.View(nameof(Login), model);
             }
 
-            if (!this.ModelState.IsValid || !this.userServices.ValidateUser(model.UserName, model.Password))
+            if (!this.ModelState.IsValid || !this._userServices.ValidateUser(model.UserName, model.Password))
             {
                 this.ModelState.AddModelError(string.Empty, Properties.Resources.UsernameOrPasswordIsInvalid);
+
                 return this.View(nameof(Login), model);
             }
 
@@ -53,7 +56,9 @@ namespace Miniblog.Core.Controllers
 
             var principle = new ClaimsPrincipal(identity);
             var properties = new AuthenticationProperties { IsPersistent = model.RememberMe };
-            await this.HttpContext.SignInAsync(principle, properties).ConfigureAwait(false);
+            await this.HttpContext
+                .SignInAsync(principle, properties)
+                .ConfigureAwait(false);
 
             return this.LocalRedirect(returnUrl ?? "/");
         }
@@ -61,7 +66,10 @@ namespace Miniblog.Core.Controllers
         [Route("/logout")]
         public async Task<IActionResult> LogOutAsync()
         {
-            await this.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+            await this.HttpContext
+                .SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme)
+                .ConfigureAwait(false);
+
             return this.LocalRedirect("/");
         }
     }

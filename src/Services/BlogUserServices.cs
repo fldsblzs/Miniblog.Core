@@ -26,7 +26,10 @@ namespace Miniblog.Core.Services
                 iterationCount: 1000,
                 numBytesRequested: 256 / 8);
 
-            var hashText = BitConverter.ToString(hashBytes).Replace(Constants.Dash, string.Empty, StringComparison.OrdinalIgnoreCase);
+            var hashText = BitConverter
+                .ToString(hashBytes)
+                .Replace(Constants.Dash, string.Empty, StringComparison.OrdinalIgnoreCase);
+
             return hashText == config[Constants.Config.User.Password];
         }
     }

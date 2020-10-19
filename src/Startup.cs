@@ -24,69 +24,9 @@ namespace Miniblog.Core
 
     public class Startup
     {
-        public Startup(IConfiguration configuration) => this.Configuration = configuration;
+        private readonly IConfiguration _configuration;
 
-        public IConfiguration Configuration { get; }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(
-                    webBuilder =>
-                    {
-                        webBuilder
-                            .UseStartup<Startup>()
-                            .ConfigureKestrel(options => options.AddServerHeader = false);
-                    });
-
-        public static void Main(string[] args) => CreateHostBuilder(args).Build().Run();
-
-        /// <remarks>This method gets called by the runtime. Use this method to configure the HTTP request pipeline.</remarks>
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseBrowserLink();
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Shared/Error");
-                app.UseHsts();
-            }
-
-            app.Use(
-                (context, next) =>
-                {
-                    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-                    return next();
-                });
-
-            app.UseStatusCodePagesWithReExecute("/Shared/Error");
-            app.UseWebOptimizer();
-
-            app.UseStaticFilesWithCache();
-
-            if (this.Configuration.GetValue<bool>("forcessl"))
-            {
-                app.UseHttpsRedirection();
-            }
-
-            app.UseMetaWeblog("/metaweblog");
-            app.UseAuthentication();
-
-            app.UseOutputCaching();
-            app.UseWebMarkupMin();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseEndpoints(
-                endpoints =>
-                {
-                    endpoints.MapControllerRoute("default", "{controller=Blog}/{action=Index}/{id?}");
-                });
-        }
+        public Startup(IConfiguration configuration) => this._configuration = configuration;
 
         /// <remarks>This method gets called by the runtime. Use this method to add services to the container.</remarks>
         public void ConfigureServices(IServiceCollection services)
@@ -94,9 +34,12 @@ namespace Miniblog.Core
             services.AddControllersWithViews();
             services.AddRazorPages();
 
+            // Json implementations
+            services.AddSingleton<IPostCache, JsonPostCache>();
+            services.AddSingleton<IBlogService, JsonBlogService>();
+
             services.AddSingleton<IUserServices, BlogUserServices>();
-            services.AddSingleton<IBlogService, FileBlogService>();
-            services.Configure<BlogSettings>(this.Configuration.GetSection("blog"));
+            services.Configure<BlogSettings>(this._configuration.GetSection("blog"));
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddMetaWeblog<MetaWeblogService>();
 
@@ -150,6 +93,54 @@ namespace Miniblog.Core
                     pipeline.MinifyJsFiles();
                     pipeline.CompileScssFiles()
                             .InlineImages(1);
+                });
+        }
+
+        /// <remarks>This method gets called by the runtime. Use this method to configure the HTTP request pipeline.</remarks>
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseBrowserLink();
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Shared/Error");
+                app.UseHsts();
+            }
+
+            app.Use(
+                (context, next) =>
+                {
+                    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                    return next();
+                });
+
+            app.UseStatusCodePagesWithReExecute("/Shared/Error");
+            app.UseWebOptimizer();
+
+            app.UseStaticFilesWithCache();
+
+            if (this._configuration.GetValue<bool>("forcessl"))
+            {
+                app.UseHttpsRedirection();
+            }
+
+            app.UseMetaWeblog("/metaweblog");
+            app.UseAuthentication();
+
+            app.UseOutputCaching();
+            app.UseWebMarkupMin();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(
+                endpoints =>
+                {
+                    endpoints.MapControllerRoute("default", "{controller=Blog}/{action=Index}/{id?}");
                 });
         }
     }
