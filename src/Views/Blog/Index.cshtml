@@ -1,5 +1,5 @@
-﻿@model IAsyncEnumerable<Post>
-@inject IOptionsSnapshot<BlogSettings> settings
+@model IAsyncEnumerable<Post>
+@inject IOptionsSnapshot<BlogOptions> settings
 @{
     int currentPage = int.Parse(ViewContext.RouteData.Values[Constants.page] as string ?? "0");
 

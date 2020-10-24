@@ -6,6 +6,7 @@ namespace Miniblog.Core.Controllers
     using Microsoft.SyndicationFeed.Atom;
     using Microsoft.SyndicationFeed.Rss;
 
+    using Miniblog.Core.Options;
     using Miniblog.Core.Services;
 
     using System;
@@ -21,11 +22,11 @@ namespace Miniblog.Core.Controllers
     {
         private readonly IBlogService _blogService;
         private readonly WebManifest webManifest;
-        private readonly IOptionsSnapshot<BlogSettings> blogSettings;
+        private readonly IOptionsSnapshot<BlogOptions> blogSettings;
 
         public RobotsController(
             IBlogService blogService,
-            IOptionsSnapshot<BlogSettings> blogSettings,
+            IOptionsSnapshot<BlogOptions> blogSettings,
             WebManifest webManifest)
         {
             this._blogService = blogService;

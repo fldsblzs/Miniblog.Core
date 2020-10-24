@@ -9,6 +9,7 @@ namespace Miniblog.Core
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
 
+    using Miniblog.Core.Options;
     using Miniblog.Core.Services;
 
     using WebEssentials.AspNetCore.OutputCaching;
@@ -19,7 +20,7 @@ namespace Miniblog.Core
     using WilderMinds.MetaWeblog;
 
     using IWmmLogger = WebMarkupMin.Core.Loggers.ILogger;
-    using MetaWeblogService = Miniblog.Core.Services.MetaWeblogService;
+    using MetaWeblogService = Services.MetaWeblogService;
     using WmmNullLogger = WebMarkupMin.Core.Loggers.NullLogger;
 
     public class Startup
@@ -34,12 +35,14 @@ namespace Miniblog.Core
             services.AddControllersWithViews();
             services.AddRazorPages();
 
-            // Json implementations
-            services.AddSingleton<IPostCache, JsonPostCache>();
-            services.AddSingleton<IBlogService, JsonBlogService>();
+            services
+                .Configure<AzureStorageOptions>(this._configuration.GetSection(nameof(AzureStorageOptions)))
+                .Configure<BlogOptions>(this._configuration.GetSection(nameof(BlogOptions)));
+
+            services.AddSingleton<IPostCache, PostCache>();
+            services.AddSingleton<IBlogService, AzureStorageBlogService>();
 
             services.AddSingleton<IUserServices, BlogUserServices>();
-            services.Configure<BlogSettings>(this._configuration.GetSection("blog"));
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddMetaWeblog<MetaWeblogService>();
 

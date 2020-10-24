@@ -7,8 +7,9 @@ namespace Miniblog.Core.Models
     using System.Globalization;
     using System.Text;
     using System.Text.RegularExpressions;
+    using Microsoft.WindowsAzure.Storage.Table;
 
-    public class Post
+    public class Post : TableEntity
     {
         public IList<string> Categories { get; } = new List<string>();
 
@@ -21,7 +22,7 @@ namespace Miniblog.Core.Models
         public string Excerpt { get; set; } = string.Empty;
 
         [Required]
-        public string ID { get; set; } = DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture);
+        public string ID { get; set; } = Guid.NewGuid().ToString();
 
         public bool IsPublished { get; set; } = true;
 
@@ -33,6 +34,14 @@ namespace Miniblog.Core.Models
 
         [Required]
         public string Title { get; set; } = string.Empty;
+
+        public Post() { }
+
+        public void EnsureTableEntity()
+        {
+            this.PartitionKey = this.ID;
+            this.RowKey = this.Slug;
+        }
 
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The slug should be lower case.")]
         public static string CreateSlug(string title)

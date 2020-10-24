@@ -1,6 +1,6 @@
-namespace Miniblog.Core
+namespace Miniblog.Core.Options
 {
-    public class BlogSettings
+    public class BlogOptions
     {
         public int CommentsCloseAfterDays { get; set; } = 10;
 
