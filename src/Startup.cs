@@ -8,6 +8,7 @@ namespace Miniblog.Core
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
+    using Microsoft.WindowsAzure.Storage;
 
     using Miniblog.Core.Options;
     using Miniblog.Core.Services;
@@ -34,6 +35,18 @@ namespace Miniblog.Core
         {
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddSingleton(provider =>
+            {
+                var azureStorageOptions = new AzureStorageOptions();
+                _configuration.Bind(nameof(AzureStorageOptions), azureStorageOptions);
+
+                //var azureStorageOptions = provider.GetRequiredService<AzureStorageOptions>();
+                var storageAccount = CloudStorageAccount.Parse(azureStorageOptions.ConnectionString);
+                var tableClient = storageAccount.CreateCloudTableClient();
+
+                return tableClient;
+            });
 
             services
                 .Configure<AzureStorageOptions>(this._configuration.GetSection(nameof(AzureStorageOptions)))

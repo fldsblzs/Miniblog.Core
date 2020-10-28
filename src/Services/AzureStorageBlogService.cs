@@ -3,7 +3,6 @@ namespace Miniblog.Core.Services
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Options;
-    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
 
     using Miniblog.Core.Models;
@@ -19,17 +18,19 @@ namespace Miniblog.Core.Services
 
     public class AzureStorageBlogService : BlogServiceBase, IBlogService
     {
-        private readonly AzureStorageOptions
-            options;
+        private readonly AzureStorageOptions _options;
+        private readonly CloudTableClient _cloudTableClient;
 
         public AzureStorageBlogService(
             IPostCache postCache,
             IWebHostEnvironment env,
             IHttpContextAccessor contextAccessor,
-            IOptionsMonitor<AzureStorageOptions> optionsMonitor)
+            IOptionsMonitor<AzureStorageOptions> optionsMonitor,
+            CloudTableClient cloudTableClient)
             : base(postCache, env, contextAccessor)
         {
-            this.options = optionsMonitor?.CurrentValue ?? throw new ArgumentNullException(nameof(optionsMonitor));
+            this._options = optionsMonitor?.CurrentValue ?? throw new ArgumentNullException(nameof(optionsMonitor));
+            this._cloudTableClient = cloudTableClient ?? throw new ArgumentNullException(nameof(cloudTableClient));
         }
 
         public IAsyncEnumerable<Post> GetPosts()
@@ -115,7 +116,7 @@ namespace Miniblog.Core.Services
                 throw new ArgumentNullException(nameof(post));
             }
 
-            var table = this.GetTableStorage();
+            var table = this._cloudTableClient.GetTableReference(this._options.TableName);
             var deleteOperation = TableOperation.Delete(post);
             await table.ExecuteAsync(deleteOperation).ConfigureAwait(false);
 
@@ -133,7 +134,6 @@ namespace Miniblog.Core.Services
                                            DateTime.UtcNow.Ticks.ToString(CultureInfo
                                                .InvariantCulture));
             // use blob storage here?
-
             var ext = Path.GetExtension(fileName);
             var name = CleanFromInvalidChars(Path.GetFileNameWithoutExtension(fileName));
 
@@ -159,7 +159,7 @@ namespace Miniblog.Core.Services
             post.LastModified = DateTime.UtcNow;
             post.EnsureTableEntity();
 
-            var table = this.GetTableStorage();
+            var table = this._cloudTableClient.GetTableReference(this._options.TableName);
             var insertOrMergeOperation = TableOperation.InsertOrMerge(post);
             var result = await table.ExecuteAsync(insertOrMergeOperation).ConfigureAwait(false);
 
@@ -167,14 +167,6 @@ namespace Miniblog.Core.Services
             {
                 this.PostCache.AddPost(post);
             }
-        }
-
-        private CloudTable GetTableStorage()
-        {
-            var storageAccount = CloudStorageAccount.Parse(this.options.ConnectionString);
-            var tableClient = storageAccount.CreateCloudTableClient();
-
-            return tableClient.GetTableReference(this.options.TableName);
         }
 
         protected override string GetFilePath(Post post) => Path.Combine(this.Folder, $"{post?.ID}.json");

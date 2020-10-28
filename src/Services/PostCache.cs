@@ -1,7 +1,6 @@
 namespace Miniblog.Core.Services
 {
     using Microsoft.Extensions.Options;
-    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
 
     using Miniblog.Core.Options;
@@ -15,16 +14,29 @@ namespace Miniblog.Core.Services
     {
         private readonly List<Post> _posts;
         private readonly AzureStorageOptions _options;
+        private readonly CloudTableClient _cloudTableClient;
 
-        public PostCache(IOptionsMonitor<AzureStorageOptions> optionsMonitor)
+        private DateTimeOffset _timeStamp;
+
+        public PostCache(
+            IOptionsMonitor<AzureStorageOptions> optionsMonitor,
+            CloudTableClient cloudTableClient)
         {
             this._posts = new List<Post>();
             this._options = optionsMonitor?.CurrentValue ?? throw new ArgumentNullException(nameof(optionsMonitor));
-
-            this.Initialize();
+            this._cloudTableClient = cloudTableClient ?? throw new ArgumentNullException(nameof(cloudTableClient));
+            this._timeStamp = this.RefreshCache();
         }
 
-        public IEnumerable<Post> GetPosts() => this._posts;
+        public IEnumerable<Post> GetPosts()
+        {
+            if (DateTimeOffset.UtcNow > this._timeStamp.AddHours(1))
+            {
+                this._timeStamp = this.RefreshCache();
+            }
+
+            return this._posts;
+        }
 
         public void RemovePost(Post post)
         {
@@ -36,7 +48,7 @@ namespace Miniblog.Core.Services
 
         public void AddPost(Post post)
         {
-            RemovePost(post);
+            this.RemovePost(post);
 
             this._posts.Add(post);
             this.SortCache();
@@ -45,11 +57,9 @@ namespace Miniblog.Core.Services
         public void SortCache() =>
             this._posts.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
 
-        private void Initialize()
+        private DateTimeOffset RefreshCache()
         {
-            var storageAccount = CloudStorageAccount.Parse(_options.ConnectionString);
-            var tableClient = storageAccount.CreateCloudTableClient();
-            var table = tableClient.GetTableReference(_options.TableName);
+            var table = this._cloudTableClient.GetTableReference(_options.TableName);
 
             TableContinuationToken? token = null;
 
@@ -63,6 +73,8 @@ namespace Miniblog.Core.Services
                 token = queryResult.ContinuationToken;
 
             } while (token != null);
+
+            return DateTimeOffset.UtcNow;
         }
     }
 }
