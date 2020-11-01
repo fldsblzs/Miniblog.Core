@@ -9,7 +9,7 @@ pool:
 
 variables:
   AzureSubscriptionEndpoint: foldesibalazs-azure
-  DockerNamespace: contoso.azurecr.io
+  DockerNamespace: index.docker.io
   DockerRepository: fblzs/miniblogcore
   WebAppName: foldesibalazs
 
