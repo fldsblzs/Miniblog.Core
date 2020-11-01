@@ -37,11 +37,6 @@ stages:
           latest
           $(Build.BuildNumber)
 
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Pipeline.Workspace)\' 
-        artifactName:  'blog-deployment'
-
 - stage: Production
   displayName: Production stage
   dependsOn: Build
