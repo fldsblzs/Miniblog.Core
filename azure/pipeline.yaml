@@ -59,4 +59,4 @@ stages:
               DockerNamespace: $(DockerNamespace)
               DockerRepository: $(DockerRepository)
               DockerImageTag: $(Build.BuildNumber)
-              AppSettings: -user:username $(user.username) -user:password $(user.password) -user:salt $(user.salt) -AzureTableStorageOptions:TableName $(AzureTableStorageOptions.TableName) -AzureTableStorageOptions:ConnectionString $(AzureTableStorageOptions.ConnectionString)
+              AppSettings: -user__username $(user.username) -user__password $(user.password) -user__salt $(user.salt) -AzureTableStorageOptions__TableName $(AzureTableStorageOptions.TableName) -AzureTableStorageOptions__ConnectionString $(AzureTableStorageOptions.ConnectionString)
