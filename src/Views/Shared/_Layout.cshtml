@@ -1,4 +1,4 @@
-@inject IOptionsSnapshot<BlogOptions> settings
+﻿@inject IOptionsSnapshot<BlogOptions> settings
 @inject WebManifest manifest
 @{
     var host = $"{Context.Request.Scheme}://{Context.Request.Host}";
@@ -58,24 +58,22 @@
     <footer class="sitefooter">
         <div class="container">
             <nav>
-                <ul>
-                    @{
-                        string path = Context.Request.Path;
+				<ul>
+					@{
+						string path = Context.Request.Path;
 
-                        if (User.Identity.IsAuthenticated)
-                        {
-                            <li><a asp-controller="Blog" asp-action="Edit" asp-route-id="">@Miniblog.Core.Properties.Resources.NewPost</a></li>
-                            <li><a href="~/logout/" title="@Miniblog.Core.Properties.Resources.SignOutAsAdministrator">@Miniblog.Core.Properties.Resources.SignOut</a></li>
-                        }
-                        else
-                        {
-                            <li><a href="~/login/?returnUrl=@path" rel="nofollow" title="@Miniblog.Core.Properties.Resources.SignInAsAdministrator">@Miniblog.Core.Properties.Resources.SignIn</a></li>
-                        }
-                    }
-                </ul>
+						if (User.Identity.IsAuthenticated)
+						{
+							<li><a asp-controller="Blog" asp-action="Edit" asp-route-id="">@Miniblog.Core.Properties.Resources.NewPost</a></li>
+							<li><a href="~/logout/" title="@Miniblog.Core.Properties.Resources.SignOutAsAdministrator">@Miniblog.Core.Properties.Resources.SignOut</a></li>
+						}
+						<li><a asp-controller="Blog" asp-action="About">About</a></li>
+						<li><a asp-controller="Blog" asp-action="Archives">Archives</a></li>
+					}
+				</ul>
             </nav>
             <p>
-                @Miniblog.Core.Properties.Resources.PoweredBy <a href="https://github.com/madskristensen/Miniblog.Core" rel="noopener noreferrer" target="_blank">@Miniblog.Core.Properties.Resources.MiniblogCore</a>
+                @Miniblog.Core.Properties.Resources.PoweredBy <a href="https://github.com/fldsblzs/Miniblog.Core" rel="noopener noreferrer" target="_blank">@Miniblog.Core.Properties.Resources.MiniblogCore</a>
             </p>
         </div>
     </footer>

@@ -33,6 +33,25 @@ namespace Miniblog.Core.Controllers
             this._webManifest = webManifest;
         }
 
+        [Route("/blog/about")]
+        public IActionResult About() => this.View("~/Views/Blog/About.cshtml", ".NET Blog");
+
+        [Route("/blog/archives")]
+        public IActionResult Archives()
+        {
+            var postsByYear = this._blogService.GetPostsByYear();
+
+            return this.View("~/Views/Blog/Archives.cshtml", postsByYear);
+        }
+
+        [Route("/blog/force-refresh")]
+        public Task<IActionResult> ForceRefresh()
+        {
+            this._blogService.ForceRefresh();
+
+            return this.Index();
+        }
+
         [Route("/{page:int?}")]
         [OutputCache(Profile = "default")]
         public async Task<IActionResult> Index([FromRoute] int page = 0)

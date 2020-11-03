@@ -7,9 +7,13 @@ namespace Miniblog.Core.Services
 
     public interface IBlogService
     {
+        void ForceRefresh();
+
         Task DeletePost(Post post);
 
         IAsyncEnumerable<string> GetCategories();
+
+        Dictionary<int, List<Post>> GetPostsByYear();
 
         Task<Post?> GetPostById(string id);
 

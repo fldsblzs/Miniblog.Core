@@ -92,6 +92,16 @@ namespace Miniblog.Core.Services
             return posts.ToAsyncEnumerable();
         }
 
+        public Dictionary<int, List<Post>> GetPostsByYear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ForceRefresh()
+        {
+            throw new NotImplementedException();
+        }
+
         public abstract Task<string> SaveFile(byte[] bytes, string fileName, string? suffix = null);
 
         public abstract Task SavePost(Post post);

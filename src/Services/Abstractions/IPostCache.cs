@@ -1,4 +1,4 @@
-﻿namespace Miniblog.Core.Services
+namespace Miniblog.Core.Services
 {
     using System.Collections.Generic;
     using Models;
@@ -12,5 +12,7 @@
         void AddPost(Post post);
 
         void SortCache();
+
+        void Refresh();
     }
 }

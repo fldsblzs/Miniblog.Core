@@ -1,0 +1,17 @@
+@model Dictionary<int, List<Post>>
+
+<article class="post container" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost">
+	<h1 itemprop="name headline">Archives</h1>
+
+	@foreach (var item in Model)
+	{
+		var postsInYear = Model.GetValueOrDefault(item.Key);
+
+		<p><b>@item.Key</b> (@postsInYear.Count)</p>
+
+		foreach (var post in postsInYear)
+		{
+			<p><a asp-controller="Blog" asp-action="Post" asp-route-slug="@post.Slug">@post.Title</a></p>
+		}
+	}
+</article>

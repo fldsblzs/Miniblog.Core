@@ -33,6 +33,16 @@ namespace Miniblog.Core.Services
             this._cloudTableClient = cloudTableClient ?? throw new ArgumentNullException(nameof(cloudTableClient));
         }
 
+        public void ForceRefresh()
+        {
+            var isAdmin = this.IsAdmin();
+
+            if (isAdmin)
+            {
+                this.PostCache.Refresh();
+            }
+        }
+
         public IAsyncEnumerable<Post> GetPosts()
         {
             var isAdmin = this.IsAdmin();
@@ -57,6 +67,17 @@ namespace Miniblog.Core.Services
                 .ToAsyncEnumerable();
 
             return posts;
+        }
+
+        public Dictionary<int, List<Post>> GetPostsByYear()
+        {
+            var isAdmin = this.IsAdmin();
+
+            return this.PostCache
+                .GetPosts()
+                .Where(p => p.PubDate <= DateTime.UtcNow && (p.IsPublished || isAdmin))
+                .GroupBy(x => x.PubDate.Year)
+                .ToDictionary(grp => grp.Key, grp => grp.ToList());
         }
 
         public Task<Post?> GetPostById(string id)

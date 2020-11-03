@@ -12,11 +12,11 @@ namespace Miniblog.Core.Services
 
     public class PostCache : IPostCache
     {
-        private readonly List<Post> _posts;
         private readonly AzureStorageOptions _options;
         private readonly CloudTableClient _cloudTableClient;
 
         private DateTimeOffset _timeStamp;
+        private List<Post> _posts;
 
         public PostCache(
             IOptionsMonitor<AzureStorageOptions> optionsMonitor,
@@ -57,11 +57,15 @@ namespace Miniblog.Core.Services
         public void SortCache() =>
             this._posts.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
 
+        public void Refresh() =>
+            RefreshCache();
+
         private DateTimeOffset RefreshCache()
         {
             var table = this._cloudTableClient.GetTableReference(_options.TableName);
 
             TableContinuationToken? token = null;
+            var posts = new List<Post>();
 
             do
             {
@@ -69,10 +73,12 @@ namespace Miniblog.Core.Services
                     .GetAwaiter()
                     .GetResult();
 
-                this._posts.AddRange(queryResult.Results);
+                posts.AddRange(queryResult.Results);
                 token = queryResult.ContinuationToken;
 
             } while (token != null);
+
+            this._posts = posts;
 
             return DateTimeOffset.UtcNow;
         }
