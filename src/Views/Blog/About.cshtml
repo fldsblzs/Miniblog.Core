@@ -1,0 +1,25 @@
+@model string
+@{
+	string currentUrl = Context.Request.Scheme + "://" + Context.Request.Host + Context.Request.Path;
+	string enc = System.Net.WebUtility.UrlEncode(currentUrl);
+}
+
+<article class="post container" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost">
+	<h1 itemprop="name headline">About this blog</h1>
+	<div class="post">
+		<p style="text-align:start">
+			A dev from Budapest, Hungary decided to start a blog about software and stuff.
+			This place is dedicated to write a few articles now and then about daily struggles, interesting topics and small victories all along the way. Mostly .NET related.
+			My area of work mainly covers back-end (ASP.NET Core, C#, Azure) and DevOps (Docker, Kubernetes, CI/CD automation) kind of topics, but there are no real borders set up.
+		</p>
+		<p style="text-align:start">
+			The content of this blog is not related to my professional work and it does not represent my current company in any means.
+		</p>
+		<p style="text-align:start">
+			If you have any questions don't hesitate to reach out to <a href="mailto:foldesibalazs@gmail.com?subject=@Model.Replace(" ", "%20")&amp;body=@enc" target="_blank">me</a>!
+		</p>
+		<p style="text-align:start">
+			Thanks for tuning in.
+		</p>
+	</div>
+</article>

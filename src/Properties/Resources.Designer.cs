@@ -142,7 +142,7 @@ namespace Miniblog.Core.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Powered by.
+        ///   Looks up a localized string similar to Powered by a fork of.
         /// </summary>
         public static string PoweredBy {
             get {
