@@ -1,0 +1,15 @@
+version: "3.6"
+
+services:
+  blog:
+    image: fblzs/miniblogcore:latest
+    build:
+      context: .
+      dockerfile: ./src/Dockerfile
+    container_name: blogcontainer
+    ports:
+      - 80:5000
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=;http://+:80
+      - AzureTableStorageOptions__ConnectionString=${AzureStorageOptions__ConnectionString}
