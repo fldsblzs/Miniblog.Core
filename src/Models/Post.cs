@@ -6,14 +6,19 @@ namespace Miniblog.Core.Models
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
+    using System.Text.Json;
     using System.Text.RegularExpressions;
     using Microsoft.WindowsAzure.Storage.Table;
 
     public class Post : TableEntity
     {
-        public IList<string> Categories { get; } = new List<string>();
+        public IList<string> Categories { get; set; } = new List<string>();
 
-        public IList<Comment> Comments { get; } = new List<Comment>();
+        public string? CategoriesJson { get; set; } = "[]";
+
+        public IList<Comment> Comments { get; set; } = new List<Comment>();
+
+        public string? CommentsJson { get; set; } = "[]";
 
         [Required]
         public string Content { get; set; } = string.Empty;
@@ -41,6 +46,15 @@ namespace Miniblog.Core.Models
         {
             this.PartitionKey = this.ID;
             this.RowKey = this.Slug;
+
+            this.CategoriesJson = JsonSerializer.Serialize(this.Categories);
+            this.CommentsJson = JsonSerializer.Serialize(this.Comments);
+        }
+
+        public void EnsureBlogEntity()
+        {
+            this.Categories = JsonSerializer.Deserialize<IList<string>>(this.CategoriesJson);
+            this.Comments = JsonSerializer.Deserialize<IList<Comment>>(this.CommentsJson);
         }
 
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "The slug should be lower case.")]

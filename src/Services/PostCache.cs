@@ -58,11 +58,11 @@ namespace Miniblog.Core.Services
             this._posts.Sort((p1, p2) => p2.PubDate.CompareTo(p1.PubDate));
 
         public void Refresh() =>
-            RefreshCache();
+            this.RefreshCache();
 
         private DateTimeOffset RefreshCache()
         {
-            var table = this._cloudTableClient.GetTableReference(_options.TableName);
+            var table = this._cloudTableClient.GetTableReference(this._options.TableName);
 
             TableContinuationToken? token = null;
             var posts = new List<Post>();
@@ -78,7 +78,14 @@ namespace Miniblog.Core.Services
 
             } while (token != null);
 
+
+            foreach (var post in posts)
+            {
+                post.EnsureBlogEntity();
+            }
+
             this._posts = posts;
+            this.SortCache();
 
             return DateTimeOffset.UtcNow;
         }
