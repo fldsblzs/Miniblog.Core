@@ -42,7 +42,7 @@ namespace Miniblog.Core.Models
 
         public Post() { }
 
-        public void EnsureTableEntity()
+        public void SetupTableEntity()
         {
             this.PartitionKey = this.ID;
             this.RowKey = this.Slug;
@@ -51,7 +51,7 @@ namespace Miniblog.Core.Models
             this.CommentsJson = JsonSerializer.Serialize(this.Comments);
         }
 
-        public void EnsureBlogEntity()
+        public void UnFlatten()
         {
             this.Categories = JsonSerializer.Deserialize<IList<string>>(this.CategoriesJson);
             this.Comments = JsonSerializer.Deserialize<IList<Comment>>(this.CommentsJson);

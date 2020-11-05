@@ -178,7 +178,7 @@ namespace Miniblog.Core.Services
             }
 
             post.LastModified = DateTime.UtcNow;
-            post.EnsureTableEntity();
+            post.SetupTableEntity();
 
             var table = this._cloudTableClient.GetTableReference(this._options.TableName);
             var insertOrMergeOperation = TableOperation.InsertOrMerge(post);

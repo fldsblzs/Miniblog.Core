@@ -81,7 +81,7 @@ namespace Miniblog.Core.Services
 
             foreach (var post in posts)
             {
-                post.EnsureBlogEntity();
+                post.UnFlatten();
             }
 
             this._posts = posts;
