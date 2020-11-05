@@ -41,7 +41,6 @@ namespace Miniblog.Core
                 var azureStorageOptions = new AzureStorageOptions();
                 _configuration.Bind(nameof(AzureStorageOptions), azureStorageOptions);
 
-                //var azureStorageOptions = provider.GetRequiredService<AzureStorageOptions>();
                 var storageAccount = CloudStorageAccount.Parse(azureStorageOptions.ConnectionString);
                 var tableClient = storageAccount.CreateCloudTableClient();
 
